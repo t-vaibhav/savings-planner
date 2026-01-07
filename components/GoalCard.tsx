@@ -3,6 +3,7 @@ import { IconType } from "react-icons";
 import ProgressBar from "./ProgressBar";
 import { PiCurrencyInrBold, PiPlus } from "react-icons/pi";
 import { BiDollar } from "react-icons/bi";
+// import UpdateGoal from "./UpdateGoal";
 import { dollarToInr, inrToDollar } from "@/util/fetchRates";
 type GoalCardProps = {
     index: string;
@@ -26,7 +27,27 @@ export default function GoalCard({
         useState<number>(targetAmount);
 
     const symbol = currency === "USD" ? "$" : "₹";
+    useEffect(() => {
+        const convertAmount = async () => {
+            try {
+                let rate: number | null = null;
 
+                if (currency === "USD") {
+                    rate = await dollarToInr(); // USD -> INR
+                } else {
+                    rate = await inrToDollar(); // INR -> USD
+                }
+
+                if (!rate) return;
+
+                setConvertedTarget(targetAmount * rate);
+            } catch (error) {
+                console.error("Exchange rate fetch failed", error);
+            }
+        };
+
+        convertAmount();
+    }, [currency, targetAmount]);
     return (
         <div className="p-5 shadow rounded-xl border border-gray-500">
             <div className="flex justify-between">

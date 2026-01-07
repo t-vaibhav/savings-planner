@@ -5,6 +5,71 @@ import { PiPlus } from "react-icons/pi";
 import { db, Goal, Currency } from "@/lib/db";
 
 export default function AddGoal() {
+    const [name, setName] = useState("");
+    const [targetAmount, setTargetAmount] = useState("0");
+    const [currency, setCurrency] = useState<Currency>("INR");
+
+    const [errors, setErrors] = useState<{
+        name?: string;
+        targetAmount?: string;
+    }>({});
+
+    const [goals, setGoals] = useState<Goal[]>([]);
+
+    const validate = (): boolean => {
+        const newErrors: { name?: string; targetAmount?: string } = {};
+
+        if (!name.trim()) {
+            newErrors.name = "Goal name is required";
+        } else if (name.trim().length < 3) {
+            newErrors.name = "Goal name must be at least 3 characters";
+        }
+
+        const amount = parseFloat(targetAmount);
+        if (!targetAmount) {
+            newErrors.targetAmount = "Target amount is required";
+        } else if (isNaN(amount) || amount <= 0) {
+            newErrors.targetAmount = "Target amount must be a positive number";
+        } else if (amount > 100000000) {
+            newErrors.targetAmount = "Target amount is too large";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    /* -------------------- Add Goal -------------------- */
+    const onAddGoal = async (
+        name: string,
+        targetAmount: number,
+        currency: Currency
+    ) => {
+        await db.goals.add({
+            name,
+            targetAmount,
+            remainingAmount: targetAmount,
+            currency,
+        } as Omit<Goal, "id">);
+
+        const updatedGoals = await db.goals.toArray();
+        setGoals(updatedGoals);
+    };
+
+    /* -------------------- Submit -------------------- */
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!validate()) return;
+
+        await onAddGoal(name.trim(), parseFloat(targetAmount), currency);
+        alert("Goal Added Succesfully!");
+        setName("");
+        setTargetAmount("");
+        setCurrency("INR");
+        setErrors({});
+    };
+
+    /* -------------------- UI -------------------- */
     return (
         <div>
             <Modal
@@ -16,15 +81,78 @@ export default function AddGoal() {
                 }
             >
                 <div className="space-y-4">
-                    <h1>Form Heading</h1>
-                    <h2 className="max-w-[50vw]">
-                        Lorem ipsum dolor sit amet, consectetur adipisicing
-                        elit. Id cum eaque quaerat temporibus magnam doloremque,
-                        alias ullam, eum quam saepe illum nostrum, corrupti
-                        consequuntur. Nisi id iste assumenda, qui perspiciatis
-                        doloribus, ducimus consequuntur, ratione vel cupiditate
-                        a placeat illum quas.
-                    </h2>
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Goal Name */}
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                Goal Name
+                            </label>
+                            <input
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="e.g. Emergency Fund"
+                                className={`w-full px-4 py-3 rounded-lg border-2 ${
+                                    errors.name
+                                        ? "border-red-400"
+                                        : "border-slate-200"
+                                }`}
+                            />
+                            {errors.name && (
+                                <p className="text-red-500 text-sm">
+                                    {errors.name}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Target + Currency */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-semibold mb-2">
+                                    Target Amount
+                                </label>
+                                <input
+                                    type="number"
+                                    value={targetAmount}
+                                    onChange={(e) =>
+                                        setTargetAmount(e.target.value)
+                                    }
+                                    className={`w-full px-4 py-3 rounded-lg border-2 ${
+                                        errors.targetAmount
+                                            ? "border-red-400"
+                                            : "border-slate-200"
+                                    }`}
+                                />
+                                {errors.targetAmount && (
+                                    <p className="text-red-500 text-sm">
+                                        {errors.targetAmount}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold mb-2">
+                                    Currency
+                                </label>
+                                <select
+                                    value={currency}
+                                    onChange={(e) =>
+                                        setCurrency(e.target.value as Currency)
+                                    }
+                                    className="w-full px-4 py-3 rounded-lg border-2 border-slate-200"
+                                >
+                                    <option value="INR">INR (₹)</option>
+                                    <option value="USD">USD ($)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="w-full bg-blue-600 text-white py-3 rounded-lg cursor-pointer"
+                        >
+                            Add Goal
+                        </button>
+                    </form>
                 </div>
             </Modal>
         </div>

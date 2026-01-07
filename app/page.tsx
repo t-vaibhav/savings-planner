@@ -10,7 +10,9 @@ import { BiRefresh } from "react-icons/bi";
 import { BsGraphUpArrow } from "react-icons/bs";
 import { FiTarget } from "react-icons/fi";
 import { PiPlus } from "react-icons/pi";
+import { db } from "@/lib/db";
 import axios from "axios";
+import { dollarToInr, inrToDollar } from "@/util/fetchRates";
 
 type Currency = "INR" | "USD";
 
