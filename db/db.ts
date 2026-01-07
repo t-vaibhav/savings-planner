@@ -1,4 +1,4 @@
-import { Contribution } from "@/types/COntributions";
+import { Contribution } from "@/types/Contributions";
 import { Goal } from "@/types/GoalType";
 import { Rates } from "@/types/Rates";
 import Dexie, { Table } from "dexie";
