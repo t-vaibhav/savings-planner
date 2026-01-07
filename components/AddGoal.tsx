@@ -57,7 +57,7 @@ const AddGoal = (): JSX.Element => {
     return (
         <Modal
             trigger={
-                <button className="flex items-center justify-center gap-2 rounded-lg border border-gray-400 bg-blue-600 p-2 text-base text-white shadow">
+                <button className="flex items-center justify-center gap-2 rounded-lg border border-gray-400 cursor-pointer bg-blue-600 p-2 text-base text-white shadow">
                     <PiPlus />
                     <span>Add Goal</span>
                 </button>

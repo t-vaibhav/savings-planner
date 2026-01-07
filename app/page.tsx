@@ -133,7 +133,7 @@ const Home = (): JSX.Element => {
                     <button
                         onClick={fetchRate}
                         disabled={isLoading}
-                        className="flex items-center gap-2 rounded-lg bg-blue-600 px-2 py-1 duration-300 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-2 py-1 duration-300 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <BiRefresh />
                         <span className="hidden md:block">Refresh Rates</span>

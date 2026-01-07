@@ -29,30 +29,30 @@ const UpdateGoal = ({ goalId }: UpdateGoalProps): JSX.Element | null => {
     const symbol = currency === "USD" ? "$" : "₹";
 
     // Validate contribution before updating state
-    const validate = useCallback((): boolean => {
-        const nextErrors: FormErrors = {};
+    const validate = (): boolean => {
+        const newErrors: typeof errors = {};
         const amount = Number(contributionAmount);
 
         if (!contributionAmount) {
-            nextErrors.contributionAmount = "Contribution amount is required";
-        } else if (Number.isNaN(amount) || amount <= 0) {
-            nextErrors.contributionAmount =
+            newErrors.contributionAmount = "Contribution amount is required";
+        } else if (isNaN(amount) || amount <= 0) {
+            newErrors.contributionAmount =
                 "Contribution must be a positive number";
         } else if (amount > remainingAmount) {
-            nextErrors.contributionAmount =
+            newErrors.contributionAmount =
                 "Contribution must be ≤ remaining amount";
         }
 
         if (!contributionDate) {
-            nextErrors.contributionDate = "Date is required";
+            newErrors.contributionDate = "Date is required";
         }
 
-        setErrors(nextErrors);
-        return Object.keys(nextErrors).length === 0;
-    }, [contributionAmount, contributionDate, remainingAmount]);
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     // Persist contribution and update goal atomically
-    const updateGoal = useCallback(async () => {
+    const onUpdateGoal = async () => {
         const amount = Number(contributionAmount);
 
         await db.transaction("rw", db.goals, db.contributions, async () => {
@@ -69,18 +69,11 @@ const UpdateGoal = ({ goalId }: UpdateGoalProps): JSX.Element | null => {
         });
 
         setContributionAmount("");
-    }, [
-        goalId,
-        contributionAmount,
-        contributionDate,
-        remainingAmount,
-        contributions,
-    ]);
-
+    };
     return (
         <Modal
             trigger={
-                <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-400 bg-blue-600 p-2 text-base text-white shadow">
+                <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-400 cursor-pointer bg-blue-600 p-2 text-base text-white shadow">
                     <PiPlus />
                     <span>Edit Goal</span>
                 </button>
@@ -118,7 +111,7 @@ const UpdateGoal = ({ goalId }: UpdateGoalProps): JSX.Element | null => {
                             event.preventDefault();
                             if (!validate()) return;
 
-                            await updateGoal();
+                            await onUpdateGoal();
                             closeModal();
                         }}
                     >
@@ -173,7 +166,7 @@ const UpdateGoal = ({ goalId }: UpdateGoalProps): JSX.Element | null => {
 
                         <button
                             type="submit"
-                            className="w-full rounded-lg bg-blue-600 py-3 text-white"
+                            className="w-full rounded-lg cursor-pointer bg-blue-600 py-3 text-white"
                         >
                             Update Goal
                         </button>
