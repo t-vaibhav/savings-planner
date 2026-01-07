@@ -6,6 +6,11 @@ A lightweight, client-side savings planner that allows users to create financial
 
 The application enables users to plan and track multiple savings goals such as an emergency fund or a travel goal. Each goal supports live currency conversion, progress tracking, and incremental contributions, all while remaining completely client-side. No backend or authentication is used. All data is stored locally in the browser.
 
+## Images
+<img width="1919" height="916" alt="image" src="https://github.com/user-attachments/assets/7592de75-b30b-4c7a-a5f7-8481ec3fbf28" />
+<img width="1917" height="917" alt="image" src="https://github.com/user-attachments/assets/702e8e80-8600-4190-8f70-5fb33d5288af" />
+<img width="1917" height="918" alt="image" src="https://github.com/user-attachments/assets/6255d01f-b785-4200-bf46-edfecb4f3b71" />
+
 ## Features
 
 ### Goal Management
