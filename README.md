@@ -6,6 +6,11 @@ A lightweight, client-side savings planner that allows users to create financial
 
 The application enables users to plan and track multiple savings goals such as an emergency fund or a travel goal. Each goal supports live currency conversion, progress tracking, and incremental contributions, all while remaining completely client-side. No backend or authentication is used. All data is stored locally in the browser.
 
+## Live Demo
+
+Live demo link: [https://savings-planner-nine.vercel.app/](https://savings-planner-nine.vercel.app/)
+Live Demo Video : [https://www.youtube.com/watch?v=jZ2LDDT8Mh4](https://www.youtube.com/watch?v=jZ2LDDT8Mh4)
+
 ## Images
 <img width="1919" height="916" alt="image" src="https://github.com/user-attachments/assets/7592de75-b30b-4c7a-a5f7-8481ec3fbf28" />
 <img width="1917" height="917" alt="image" src="https://github.com/user-attachments/assets/702e8e80-8600-4190-8f70-5fb33d5288af" />
@@ -117,12 +122,6 @@ src/
 -   All goals and contributions are stored locally using IndexedDB via Dexie
 -   Data persists across page reloads
 -   No backend services are required
-
-## Live Demo
-
-Live demo link: [https://savings-planner-nine.vercel.app/](https://savings-planner-nine.vercel.app/)
-
-Alternatively, a short demo video can be linked in this section.
 
 ## Validation and Edge Cases
 
