@@ -111,7 +111,7 @@ const Home = (): JSX.Element => {
 
     if (isLoading || !goals) {
         return (
-            <div className="min-h-screen bg-blue-100 px-5 py-10">
+            <div className="h-screen bg-blue-100 px-5 py-10">
                 <Loader />
             </div>
         );
@@ -119,8 +119,9 @@ const Home = (): JSX.Element => {
 
     return (
         <div className="min-h-screen space-y-5 bg-blue-100 px-5 py-10 md:px-10 lg:px-20 xl:px-32">
-            <h1 className="text-center text-4xl font-semibold">
-                Syfe Savings Planner
+            <h1 className="text-center text-4xl font-semibold flex  justify-center items-center space-x-3">
+                <FiTarget className="text-blue-700" />{" "}
+                <span>Syfe Savings Planner</span>
             </h1>
 
             <div className="min-h-20 bg-blue-700 p-5 text-white">
