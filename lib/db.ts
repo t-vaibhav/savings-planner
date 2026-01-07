@@ -3,7 +3,7 @@ import Dexie, { Table } from "dexie";
 export type Currency = "INR" | "USD";
 
 export interface Goal {
-    id?: string;
+    id?: number;
     name: string;
     targetAmount: number;
     remainingAmount: number;
@@ -12,15 +12,23 @@ export interface Goal {
 }
 
 export interface Rates {
-    id?: string;
+    id?: number;
     rate: number;
     date: Date;
     currency: Currency;
 }
 
+export interface Contribution {
+    id?: number;
+    goalId: number;
+    amount: number;
+    date: Date;
+}
+
 class GoalsDB extends Dexie {
-    goals!: Table<Goal, string>;
-    rates!: Table<Rates, string>;
+    goals!: Table<Goal, number>;
+    rates!: Table<Rates, number>;
+    contributions!: Table<Contribution, number>;
 
     constructor() {
         super("GoalsDB");
@@ -33,6 +41,18 @@ class GoalsDB extends Dexie {
         this.version(2).stores({
             goals: "++id",
             rates: "++id, currency, date",
+        });
+
+        this.version(3).stores({
+            goals: "++id",
+            rates: "++id, currency, date",
+            contributions: "++id, goalId, date",
+        });
+
+        this.version(4).stores({
+            goals: "++id, remainingAmount",
+            rates: "++id, currency, date",
+            contributions: "++id, goalId, date",
         });
     }
 }

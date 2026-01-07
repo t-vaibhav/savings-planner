@@ -4,7 +4,10 @@ import ProgressBar from "./ProgressBar";
 import { PiCurrencyInrBold, PiPlus } from "react-icons/pi";
 import { BiDollar } from "react-icons/bi";
 import UpdateGoal from "./UpdateGoal";
-import { dollarToInr, inrToDollar } from "@/util/fetchRates";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/db";
+import { TiTick } from "react-icons/ti";
+
 type GoalCardProps = {
     index: string;
     title?: string;
@@ -12,7 +15,6 @@ type GoalCardProps = {
     contributions: number;
     remainingAmount: number;
     currency?: string;
-    exchangeRate: number;
 };
 
 export default function GoalCard({
@@ -22,7 +24,6 @@ export default function GoalCard({
     remainingAmount,
     contributions,
     currency,
-    exchangeRate,
 }: GoalCardProps) {
     const progress = Math.floor(
         ((targetAmount - remainingAmount) / targetAmount) * 100
@@ -31,29 +32,38 @@ export default function GoalCard({
         useState<number>(targetAmount);
 
     const symbol = currency === "USD" ? "$" : "₹";
+    const usdRate = useLiveQuery(
+        async () => {
+            const latest = await db.rates
+                .where("currency")
+                .equals("USD")
+                .last(); // latest entry
+
+            return latest?.rate ?? 1;
+        },
+        [],
+        1
+    );
     useEffect(() => {
-        const convertAmount = async () => {
-            try {
-                let rate: number | null = null;
+        if (!usdRate) return;
 
-                if (currency === "USD") {
-                    rate = exchangeRate; // USD -> INR
-                } else {
-                    rate = 1 / exchangeRate; // INR -> USD
-                }
+        let rate = 1;
 
-                if (!rate) return;
+        if (currency === "USD") {
+            rate = usdRate;
+        } else {
+            rate = 1 / usdRate;
+        }
 
-                setConvertedTarget(targetAmount * rate);
-            } catch (error) {
-                console.error("Exchange rate fetch failed", error);
-            }
-        };
+        const value = targetAmount * rate;
 
-        convertAmount();
-    }, [currency, targetAmount]);
+        const flooredValue = Math.floor(value * 100) / 100;
+
+        setConvertedTarget(flooredValue);
+    }, [currency, targetAmount, usdRate]);
+
     return (
-        <div className="p-5 shadow rounded-xl border border-gray-500">
+        <div className="p-5 bg-white shadow rounded-xl border border-gray-500">
             <div className="flex justify-between">
                 <span className="text-lg font-semibold">{title}</span>
                 <span className="text-sm bg-gray-300 p-1 rounded-xl px-2">
@@ -94,7 +104,14 @@ export default function GoalCard({
                     {remainingAmount} remaining
                 </span>
             </div>
-            <UpdateGoal goalId={index} />
+            {progress === 100 ? (
+                <button className="cursor-pointer p-2 border border-gray-400 rounded-lg shadow flex justify-center w-full bg-green-600 text-white items-center space-x-2 text-base">
+                    <TiTick />
+                    <span>Completed</span>
+                </button>
+            ) : (
+                <UpdateGoal goalId={parseInt(index)} />
+            )}
         </div>
     );
 }

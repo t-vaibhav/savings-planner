@@ -6,6 +6,7 @@ type DashBoardItemsProps = {
     iconText: String;
     primaryText: String;
     secondaryText: String;
+    amount?: number;
 };
 
 export default function DashboardItem({
