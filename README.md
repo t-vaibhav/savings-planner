@@ -8,8 +8,10 @@ The application enables users to plan and track multiple savings goals such as a
 
 ## Live Demo
 
-Live demo link: [https://savings-planner-nine.vercel.app/](https://savings-planner-nine.vercel.app/)
-Live Demo Video : [https://www.youtube.com/watch?v=jZ2LDDT8Mh4](https://www.youtube.com/watch?v=jZ2LDDT8Mh4)
+Live Demo Link: https://savings-planner-nine.vercel.app/
+
+Live Demo Video: https://www.youtube.com/watch?v=jZ2LDDT8Mh4
+
 
 ## Images
 <img width="1919" height="916" alt="image" src="https://github.com/user-attachments/assets/7592de75-b30b-4c7a-a5f7-8481ec3fbf28" />
