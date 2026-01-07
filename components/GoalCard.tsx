@@ -3,14 +3,16 @@ import { IconType } from "react-icons";
 import ProgressBar from "./ProgressBar";
 import { PiCurrencyInrBold, PiPlus } from "react-icons/pi";
 import { BiDollar } from "react-icons/bi";
-// import UpdateGoal from "./UpdateGoal";
+import UpdateGoal from "./UpdateGoal";
 import { dollarToInr, inrToDollar } from "@/util/fetchRates";
 type GoalCardProps = {
     index: string;
-    title?: String;
+    title?: string;
     targetAmount: number;
+    contributions: number;
     remainingAmount: number;
-    currency?: String;
+    currency?: string;
+    exchangeRate: number;
 };
 
 export default function GoalCard({
@@ -18,7 +20,9 @@ export default function GoalCard({
     title,
     targetAmount,
     remainingAmount,
+    contributions,
     currency,
+    exchangeRate,
 }: GoalCardProps) {
     const progress = Math.floor(
         ((targetAmount - remainingAmount) / targetAmount) * 100
@@ -33,9 +37,9 @@ export default function GoalCard({
                 let rate: number | null = null;
 
                 if (currency === "USD") {
-                    rate = await dollarToInr(); // USD -> INR
+                    rate = exchangeRate; // USD -> INR
                 } else {
-                    rate = await inrToDollar(); // INR -> USD
+                    rate = 1 / exchangeRate; // INR -> USD
                 }
 
                 if (!rate) return;
@@ -78,15 +82,19 @@ export default function GoalCard({
                 <ProgressBar progress={progress} />
             </div>
             <div className="flex justify-between text-gray-700 my-3">
-                <span className="text-sm font-medium">1 contributions</span>
+                <span className="text-sm font-medium">
+                    {contributions === 0
+                        ? "No Contribution"
+                        : contributions === 1
+                        ? "1 Contribution"
+                        : `${contributions} contributions`}
+                </span>
                 <span className="text-sm font-medium">
                     {symbol}
                     {remainingAmount} remaining
                 </span>
             </div>
-            <button className="p-3 w-full rounded-lg bg-blue-600 text-large text-white font-semibold">
-                Add Contribution
-            </button>
+            <UpdateGoal goalId={index} />
         </div>
     );
 }

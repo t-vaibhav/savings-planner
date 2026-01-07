@@ -38,7 +38,6 @@ export default function AddGoal() {
         return Object.keys(newErrors).length === 0;
     };
 
-    /* -------------------- Add Goal -------------------- */
     const onAddGoal = async (
         name: string,
         targetAmount: number,
@@ -48,6 +47,7 @@ export default function AddGoal() {
             name,
             targetAmount,
             remainingAmount: targetAmount,
+            contributions: 0,
             currency,
         } as Omit<Goal, "id">);
 
@@ -55,7 +55,6 @@ export default function AddGoal() {
         setGoals(updatedGoals);
     };
 
-    /* -------------------- Submit -------------------- */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -69,7 +68,6 @@ export default function AddGoal() {
         setErrors({});
     };
 
-    /* -------------------- UI -------------------- */
     return (
         <div>
             <Modal
