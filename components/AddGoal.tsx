@@ -1,54 +1,51 @@
 "use client";
-import React, { useState } from "react";
-import { Modal } from "./Modal";
-import { PiPlus } from "react-icons/pi";
-import { db, Goal, Currency } from "@/db/db";
 
-export default function AddGoal() {
+import { JSX, useCallback, useState } from "react";
+import { PiPlus } from "react-icons/pi";
+
+import { Modal } from "./ui/Modal";
+import { db } from "@/db/db";
+import { Currency } from "@/types/Currency";
+import { Goal } from "@/types/GoalType";
+
+type FormErrors = {
+    name?: string;
+    targetAmount?: string;
+};
+
+const AddGoal = (): JSX.Element => {
     const [name, setName] = useState("");
     const [targetAmount, setTargetAmount] = useState("0");
     const [currency, setCurrency] = useState<Currency>("INR");
+    const [errors, setErrors] = useState<FormErrors>({});
 
-    const [errors, setErrors] = useState<{
-        name?: string;
-        targetAmount?: string;
-    }>({});
-
-    const validate = (): boolean => {
-        const newErrors: { name?: string; targetAmount?: string } = {};
+    // Client-side validation before persisting data
+    const validate = useCallback((): boolean => {
+        const nextErrors: FormErrors = {};
 
         if (!name.trim()) {
-            newErrors.name = "Goal name is required";
+            nextErrors.name = "Goal name is required";
         } else if (name.trim().length < 3) {
-            newErrors.name = "Goal name must be at least 3 characters";
+            nextErrors.name = "Goal name must be at least 3 characters";
         }
 
-        const amount = parseFloat(targetAmount);
+        const amount = Number(targetAmount);
         if (!targetAmount) {
-            newErrors.targetAmount = "Target amount is required";
-        } else if (isNaN(amount) || amount <= 0) {
-            newErrors.targetAmount = "Target amount must be a positive number";
-        } else if (amount > 100000000) {
-            newErrors.targetAmount = "Target amount is too large";
+            nextErrors.targetAmount = "Target amount is required";
+        } else if (Number.isNaN(amount) || amount <= 0) {
+            nextErrors.targetAmount = "Target amount must be a positive number";
+        } else if (amount > 100_000_000) {
+            nextErrors.targetAmount = "Target amount is too large";
         }
 
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+        setErrors(nextErrors);
+        return Object.keys(nextErrors).length === 0;
+    }, [name, targetAmount]);
 
-    const onAddGoal = async (
-        name: string,
-        targetAmount: number,
-        currency: Currency
-    ) => {
-        await db.goals.add({
-            name,
-            targetAmount,
-            remainingAmount: targetAmount,
-            contributions: 0,
-            currency,
-        } as Omit<Goal, "id">);
-    };
+    // Persist goal to local database
+    const addGoal = useCallback(async (goal: Omit<Goal, "id">) => {
+        await db.goals.add(goal);
+    }, []);
 
     const resetForm = () => {
         setName("");
@@ -60,7 +57,7 @@ export default function AddGoal() {
     return (
         <Modal
             trigger={
-                <button className="cursor-pointer p-2 border border-gray-400 rounded-lg shadow flex justify-center bg-blue-600 text-white items-center space-x-2 text-base">
+                <button className="flex items-center justify-center gap-2 rounded-lg border border-gray-400 bg-blue-600 p-2 text-base text-white shadow">
                     <PiPlus />
                     <span>Add Goal</span>
                 </button>
@@ -68,71 +65,71 @@ export default function AddGoal() {
         >
             {({ closeModal }) => (
                 <form
-                    onSubmit={async (e) => {
-                        e.preventDefault();
+                    className="space-y-5"
+                    onSubmit={async (event) => {
+                        event.preventDefault();
                         if (!validate()) return;
 
-                        await onAddGoal(
-                            name.trim(),
-                            parseFloat(targetAmount),
-                            currency
-                        );
+                        await addGoal({
+                            name: name.trim(),
+                            targetAmount: Number(targetAmount),
+                            remainingAmount: Number(targetAmount),
+                            contributions: 0,
+                            currency,
+                        });
 
                         resetForm();
-                        closeModal(); // ✅ CLOSE MODAL AFTER SUCCESS
+                        closeModal();
                     }}
-                    className="space-y-5"
                 >
-                    {/* Goal Name */}
                     <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        <label className="mb-2 block text-sm font-semibold text-gray-900">
                             Goal Name
                         </label>
                         <input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="e.g. Buy a Playstation, Trip to Switzerland"
-                            className={`w-full px-4 py-3 rounded-lg border-2 ${
+                            className={`w-full rounded-lg border-2 px-4 py-3 ${
                                 errors.name
                                     ? "border-red-400"
                                     : "border-slate-200"
                             }`}
                         />
                         {errors.name && (
-                            <p className="text-red-500 text-sm">
+                            <p className="text-sm text-red-500">
                                 {errors.name}
                             </p>
                         )}
                     </div>
 
-                    {/* Target + Currency */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-semibold mb-2">
+                            <label className="mb-2 block text-sm font-semibold">
                                 Target Amount
                             </label>
                             <input
                                 type="number"
+                                min={0}
                                 value={targetAmount}
                                 onChange={(e) =>
                                     setTargetAmount(e.target.value)
                                 }
-                                min={0}
-                                className={`w-full px-4 py-3 rounded-lg border-2 ${
+                                className={`w-full rounded-lg border-2 px-4 py-3 ${
                                     errors.targetAmount
                                         ? "border-red-400"
                                         : "border-slate-200"
                                 }`}
                             />
                             {errors.targetAmount && (
-                                <p className="text-red-500 text-sm">
+                                <p className="text-sm text-red-500">
                                     {errors.targetAmount}
                                 </p>
                             )}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold mb-2">
+                            <label className="mb-2 block text-sm font-semibold">
                                 Currency
                             </label>
                             <select
@@ -140,7 +137,7 @@ export default function AddGoal() {
                                 onChange={(e) =>
                                     setCurrency(e.target.value as Currency)
                                 }
-                                className="w-full px-4 py-3 rounded-lg border-2 border-slate-200"
+                                className="w-full rounded-lg border-2 border-slate-200 px-4 py-3"
                             >
                                 <option value="INR">INR (₹)</option>
                                 <option value="USD">USD ($)</option>
@@ -150,7 +147,7 @@ export default function AddGoal() {
 
                     <button
                         type="submit"
-                        className="w-full bg-blue-600 text-white py-3 rounded-lg cursor-pointer"
+                        className="w-full rounded-lg bg-blue-600 py-3 text-white"
                     >
                         Add Goal
                     </button>
@@ -158,4 +155,6 @@ export default function AddGoal() {
             )}
         </Modal>
     );
-}
+};
+
+export default AddGoal;

@@ -115,7 +115,7 @@ src/
 
 ## Live Demo
 
-Live demo link: (Add Vercel / Netlify URL here)
+Live demo link: [https://savings-planner-nine.vercel.app/](https://savings-planner-nine.vercel.app/)
 
 Alternatively, a short demo video can be linked in this section.
 

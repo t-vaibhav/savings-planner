@@ -1,10 +1,9 @@
-import React from "react";
+import { ProgressBarProps } from "@/types/props/PropTypes";
+import { JSX } from "react";
 
-interface ProgressBarProps {
-    progress: number; // 0–100
-}
-
-export default function ProgressBar({ progress }: ProgressBarProps) {
+export default function ProgressBar({
+    progress,
+}: ProgressBarProps): JSX.Element {
     return (
         <div className="relative w-full h-2 rounded-3xl bg-gray-400 overflow-hidden">
             <div

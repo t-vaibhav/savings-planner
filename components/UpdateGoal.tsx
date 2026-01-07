@@ -1,70 +1,67 @@
 "use client";
 
-import React, { useState } from "react";
-import { Modal } from "./Modal";
+import { JSX, useCallback, useState } from "react";
 import { PiPlus } from "react-icons/pi";
-import { db } from "@/db/db";
 import { useLiveQuery } from "dexie-react-hooks";
 
-interface UpdateGoalProps {
-    goalId: number;
-}
+import { Modal } from "./ui/Modal";
+import { db } from "@/db/db";
+import { UpdateGoalProps } from "@/types/props/PropTypes";
 
-export default function UpdateGoal({ goalId }: UpdateGoalProps) {
+type FormErrors = {
+    contributionAmount?: string;
+    contributionDate?: string;
+};
+
+const UpdateGoal = ({ goalId }: UpdateGoalProps): JSX.Element | null => {
     const goal = useLiveQuery(() => db.goals.get(goalId), [goalId]);
 
     const [contributionAmount, setContributionAmount] = useState("");
     const [contributionDate, setContributionDate] = useState(
         new Date().toISOString().slice(0, 10)
     );
-    const [errors, setErrors] = useState<{
-        contributionAmount?: string;
-        contributionDate?: string;
-    }>({});
+    const [errors, setErrors] = useState<FormErrors>({});
 
     if (!goal) return null;
 
     const { targetAmount, remainingAmount, contributions, currency } = goal;
+
     const symbol = currency === "USD" ? "$" : "₹";
 
-    /* ---------------- Validation ---------------- */
-
-    const validate = (): boolean => {
-        const newErrors: typeof errors = {};
+    // Validate contribution before updating state
+    const validate = useCallback((): boolean => {
+        const nextErrors: FormErrors = {};
         const amount = Number(contributionAmount);
 
         if (!contributionAmount) {
-            newErrors.contributionAmount = "Contribution amount is required";
-        } else if (isNaN(amount) || amount <= 0) {
-            newErrors.contributionAmount =
+            nextErrors.contributionAmount = "Contribution amount is required";
+        } else if (Number.isNaN(amount) || amount <= 0) {
+            nextErrors.contributionAmount =
                 "Contribution must be a positive number";
         } else if (amount > remainingAmount) {
-            newErrors.contributionAmount =
+            nextErrors.contributionAmount =
                 "Contribution must be ≤ remaining amount";
         }
 
         if (!contributionDate) {
-            newErrors.contributionDate = "Date is required";
+            nextErrors.contributionDate = "Date is required";
         }
 
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+        setErrors(nextErrors);
+        return Object.keys(nextErrors).length === 0;
+    }, [contributionAmount, contributionDate, remainingAmount]);
 
-    /* ---------------- Update Logic ---------------- */
-
-    const onUpdateGoal = async () => {
+    // Persist contribution and update goal atomically
+    const updateGoal = useCallback(async () => {
         const amount = Number(contributionAmount);
 
         await db.transaction("rw", db.goals, db.contributions, async () => {
-            // 1️⃣ Add contribution
             await db.contributions.add({
                 goalId,
                 amount,
                 date: new Date(contributionDate),
             });
 
-            // 2️⃣ Update goal summary
             await db.goals.update(goalId, {
                 remainingAmount: remainingAmount - amount,
                 contributions: contributions + 1,
@@ -72,14 +69,18 @@ export default function UpdateGoal({ goalId }: UpdateGoalProps) {
         });
 
         setContributionAmount("");
-    };
-
-    /* ---------------- UI ---------------- */
+    }, [
+        goalId,
+        contributionAmount,
+        contributionDate,
+        remainingAmount,
+        contributions,
+    ]);
 
     return (
         <Modal
             trigger={
-                <button className="cursor-pointer p-2 border border-gray-400 rounded-lg shadow flex justify-center w-full bg-blue-600 text-white items-center space-x-2 text-base">
+                <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-400 bg-blue-600 p-2 text-base text-white shadow">
                     <PiPlus />
                     <span>Edit Goal</span>
                 </button>
@@ -87,69 +88,67 @@ export default function UpdateGoal({ goalId }: UpdateGoalProps) {
         >
             {({ closeModal }) => (
                 <>
-                    <h1 className="text-2xl font-bold mb-5 text-center">
+                    <h1 className="mb-5 text-center text-2xl font-bold">
                         Add Contribution
                     </h1>
 
-                    <div className="grid grid-cols-2 gap-5 mb-5">
+                    <div className="mb-5 grid grid-cols-2 gap-5">
                         <div>
-                            <h4 className="text-lg font-semibold mb-2">
+                            <h4 className="mb-2 text-lg font-semibold">
                                 Target Amount
                             </h4>
-                            <h3 className="text-2xl text-blue-600 font-semibold">
+                            <h3 className="text-2xl font-semibold text-blue-600">
                                 {symbol} {targetAmount}
                             </h3>
                         </div>
 
                         <div>
-                            <h4 className="text-lg font-semibold mb-2">
+                            <h4 className="mb-2 text-lg font-semibold">
                                 Remaining Amount
                             </h4>
-                            <h3 className="text-2xl text-blue-600 font-semibold">
+                            <h3 className="text-2xl font-semibold text-blue-600">
                                 {symbol} {remainingAmount}
                             </h3>
                         </div>
                     </div>
 
                     <form
-                        onSubmit={async (e) => {
-                            e.preventDefault();
+                        className="space-y-5"
+                        onSubmit={async (event) => {
+                            event.preventDefault();
                             if (!validate()) return;
 
-                            await onUpdateGoal();
+                            await updateGoal();
                             closeModal();
                         }}
-                        className="space-y-5"
                     >
                         <div className="grid grid-cols-2 gap-4">
-                            {/* Amount */}
                             <div>
-                                <label className="block text-sm font-semibold mb-2">
+                                <label className="mb-2 block text-sm font-semibold">
                                     Amount
                                 </label>
                                 <input
                                     type="number"
-                                    min="0"
+                                    min={0}
                                     value={contributionAmount}
                                     onChange={(e) =>
                                         setContributionAmount(e.target.value)
                                     }
-                                    className={`w-full px-4 py-3 rounded-lg border-2 ${
+                                    className={`w-full rounded-lg border-2 px-4 py-3 ${
                                         errors.contributionAmount
                                             ? "border-red-400"
                                             : "border-slate-200"
                                     }`}
                                 />
                                 {errors.contributionAmount && (
-                                    <p className="text-red-500 text-sm">
+                                    <p className="text-sm text-red-500">
                                         {errors.contributionAmount}
                                     </p>
                                 )}
                             </div>
 
-                            {/* Date */}
                             <div>
-                                <label className="block text-sm font-semibold mb-2">
+                                <label className="mb-2 block text-sm font-semibold">
                                     Contribution Date
                                 </label>
                                 <input
@@ -158,14 +157,14 @@ export default function UpdateGoal({ goalId }: UpdateGoalProps) {
                                     onChange={(e) =>
                                         setContributionDate(e.target.value)
                                     }
-                                    className={`w-full px-4 py-3 rounded-lg border-2 ${
+                                    className={`w-full rounded-lg border-2 px-4 py-3 ${
                                         errors.contributionDate
                                             ? "border-red-400"
                                             : "border-slate-200"
                                     }`}
                                 />
                                 {errors.contributionDate && (
-                                    <p className="text-red-500 text-sm">
+                                    <p className="text-sm text-red-500">
                                         {errors.contributionDate}
                                     </p>
                                 )}
@@ -174,7 +173,7 @@ export default function UpdateGoal({ goalId }: UpdateGoalProps) {
 
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 text-white py-3 rounded-lg"
+                            className="w-full rounded-lg bg-blue-600 py-3 text-white"
                         >
                             Update Goal
                         </button>
@@ -183,4 +182,6 @@ export default function UpdateGoal({ goalId }: UpdateGoalProps) {
             )}
         </Modal>
     );
-}
+};
+
+export default UpdateGoal;

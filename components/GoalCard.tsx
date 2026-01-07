@@ -1,86 +1,77 @@
-import React, { useEffect, useState } from "react";
-import { IconType } from "react-icons";
-import ProgressBar from "./ProgressBar";
-import { PiCurrencyInrBold, PiPlus } from "react-icons/pi";
-import { BiDollar } from "react-icons/bi";
-import UpdateGoal from "./UpdateGoal";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/db/db";
+import { JSX, useEffect, useMemo, useState } from "react";
 import { TiTick } from "react-icons/ti";
+import { useLiveQuery } from "dexie-react-hooks";
 
-type GoalCardProps = {
-    index: string;
-    title?: string;
-    targetAmount: number;
-    contributions: number;
-    remainingAmount: number;
-    currency?: string;
-};
+import ProgressBar from "./ui/ProgressBar";
+import UpdateGoal from "./UpdateGoal";
+import { db } from "@/db/db";
+import { GoalCardProps } from "@/types/props/PropTypes";
 
-export default function GoalCard({
+const GoalCard = ({
     index,
     title,
     targetAmount,
     remainingAmount,
     contributions,
     currency,
-}: GoalCardProps) {
-    const progress = Math.floor(
-        ((targetAmount - remainingAmount) / targetAmount) * 100
-    );
+}: GoalCardProps): JSX.Element => {
+    // Percentage progress derived from amounts
+    const progress = useMemo(() => {
+        return Math.floor(
+            ((targetAmount - remainingAmount) / targetAmount) * 100
+        );
+    }, [targetAmount, remainingAmount]);
+
     const [convertedTarget, setConvertedTarget] =
         useState<number>(targetAmount);
 
     const symbol = currency === "USD" ? "$" : "₹";
+
+    // Fetch latest USD rate from local DB
     const usdRate = useLiveQuery(
         async () => {
             const latest = await db.rates
                 .where("currency")
                 .equals("USD")
-                .last(); // latest entry
+                .last();
 
             return latest?.rate ?? 1;
         },
         [],
         1
     );
+
+    // Convert target amount based on selected currency
     useEffect(() => {
         if (!usdRate) return;
 
-        let rate = 1;
-
-        if (currency === "USD") {
-            rate = usdRate;
-        } else {
-            rate = 1 / usdRate;
-        }
+        const rate = currency === "USD" ? usdRate : 1 / usdRate;
 
         const value = targetAmount * rate;
 
-        const flooredValue = Math.floor(value * 100) / 100;
-
-        setConvertedTarget(flooredValue);
+        setConvertedTarget(Math.floor(value * 100) / 100);
     }, [currency, targetAmount, usdRate]);
 
     return (
-        <div className="p-5 bg-white shadow rounded-xl border border-gray-500">
+        <div className="rounded-xl border border-gray-500 bg-white p-5 shadow">
             <div className="flex justify-between">
                 <span className="text-lg font-semibold">{title}</span>
-                <span className="text-sm bg-gray-300 p-1 rounded-xl px-2">
+                <span className="rounded-xl bg-gray-300 px-2 py-1 text-sm">
                     {progress}%
                 </span>
             </div>
-            <div className="mb-5">
-                <p className="text-2xl flex space-x-1 font-bold text-blue-700">
-                    <span className=" ">{symbol}</span>
-                    <span>{`${targetAmount}`}</span>
-                </p>
-                <p className="text-sm flex space-x-1 text-gray-600 font-medium">
-                    <span className=" ">{currency === "INR" ? "$" : "₹"}</span>
 
-                    <span>{`${convertedTarget}`}</span>
+            <div className="mb-5">
+                <p className="flex items-center space-x-1 text-2xl font-bold text-blue-700">
+                    <span>{symbol}</span>
+                    <span>{targetAmount}</span>
+                </p>
+                <p className="flex items-center space-x-1 text-sm font-medium text-gray-600">
+                    <span>{currency === "INR" ? "$" : "₹"}</span>
+                    <span>{convertedTarget}</span>
                 </p>
             </div>
+
             <div className="flex justify-between">
                 <span className="text-base font-medium">Progress</span>
                 <span className="text-base font-medium">
@@ -88,10 +79,10 @@ export default function GoalCard({
                     {targetAmount - remainingAmount} saved
                 </span>
             </div>
-            <div>
-                <ProgressBar progress={progress} />
-            </div>
-            <div className="flex justify-between text-gray-700 my-3">
+
+            <ProgressBar progress={progress} />
+
+            <div className="my-3 flex justify-between text-gray-700">
                 <span className="text-sm font-medium">
                     {contributions === 0
                         ? "No Contribution"
@@ -104,14 +95,17 @@ export default function GoalCard({
                     {remainingAmount} remaining
                 </span>
             </div>
+
             {progress === 100 ? (
-                <button className="cursor-pointer p-2 border border-gray-400 rounded-lg shadow flex justify-center w-full bg-green-600 text-white items-center space-x-2 text-base">
+                <button className="flex w-full items-center justify-center space-x-2 rounded-lg border border-gray-400 bg-green-600 p-2 text-base text-white shadow">
                     <TiTick />
                     <span>Completed</span>
                 </button>
             ) : (
-                <UpdateGoal goalId={parseInt(index)} />
+                <UpdateGoal goalId={index} />
             )}
         </div>
     );
-}
+};
+
+export default GoalCard;

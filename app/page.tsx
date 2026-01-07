@@ -1,24 +1,27 @@
 "use client";
 
-import AddGoal from "@/components/AddGoal";
-import DashboardItem from "@/components/DashboardItem";
-import GoalCard from "@/components/GoalCard";
-import NoGoals from "@/components/NoGoals";
-
-import { db } from "@/db/db";
+import { JSX, useCallback, useEffect, useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-
-import { useEffect, useState } from "react";
 import { BiRefresh, BiWallet } from "react-icons/bi";
 import { BsGraphUpArrow } from "react-icons/bs";
 import { FiTarget } from "react-icons/fi";
-
-import { dollarToInr } from "@/lib/fetchRates";
 import { SlCalender } from "react-icons/sl";
 
-type Currency = "INR" | "USD";
+import AddGoal from "@/components/AddGoal";
+import GoalCard from "@/components/GoalCard";
+import DashboardItem from "@/components/ui/DashboardItem";
+import NoGoals from "@/components/ui/NoGoals";
+import Loader from "@/components/ui/Loader";
 
-export default function Home() {
+import { db } from "@/db/db";
+import { dollarToInr } from "@/lib/fetchRates";
+
+type Stats = {
+    totalTarget: number;
+    totalRemaining: number;
+};
+
+const Home = (): JSX.Element => {
     const goals = useLiveQuery(
         async () => {
             const allGoals = await db.goals.toArray();
@@ -38,23 +41,24 @@ export default function Home() {
         []
     );
 
-    const [exchangeRate, setExchangeRate] = useState<number>(1);
+    const [exchangeRate, setExchangeRate] = useState(1);
     const [exchangeRateDate, setExchangeRateDate] = useState<Date>();
+    const [isLoading, setIsLoading] = useState(true);
 
-    const [stats, setStats] = useState<{
-        totalTarget: number;
-        totalRemaining: number;
-    }>({
+    const [stats, setStats] = useState<Stats>({
         totalTarget: 0,
         totalRemaining: 0,
     });
 
-    const fetchRate = async () => {
+    // Fetch and persist latest exchange rate
+    const fetchRate = useCallback(async () => {
         try {
+            setIsLoading(true);
+
             const rate = await dollarToInr();
             if (!rate) return;
 
-            const now = new Date(); // IST (browser local)
+            const now = new Date();
 
             await db.rates.add({
                 rate,
@@ -64,28 +68,23 @@ export default function Home() {
 
             setExchangeRate(rate);
             setExchangeRateDate(now);
-        } catch (err) {
-            console.error("Exchange rate fetch failed", err);
+        } catch (error) {
+            console.error("Exchange rate fetch failed", error);
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }, []);
 
+    // Aggregate goal statistics in INR
     useEffect(() => {
         if (!goals) return;
 
         const totals = goals.reduce(
             (acc, goal) => {
-                const target =
-                    goal.currency === "USD"
-                        ? goal.targetAmount * exchangeRate
-                        : goal.targetAmount;
+                const rate = goal.currency === "USD" ? exchangeRate : 1;
 
-                const remaining =
-                    goal.currency === "USD"
-                        ? goal.remainingAmount * exchangeRate
-                        : goal.remainingAmount;
-
-                acc.totalTarget += target;
-                acc.totalRemaining += remaining;
+                acc.totalTarget += goal.targetAmount * rate;
+                acc.totalRemaining += goal.remainingAmount * rate;
 
                 return acc;
             },
@@ -97,32 +96,52 @@ export default function Home() {
 
     useEffect(() => {
         fetchRate();
-    }, []);
+    }, [fetchRate]);
+
+    useEffect(() => {
+        if (goals) {
+            setIsLoading(false);
+        }
+    }, [goals]);
+
+    const totalSaved = useMemo(
+        () => stats.totalTarget - stats.totalRemaining,
+        [stats]
+    );
+
+    if (isLoading || !goals) {
+        return (
+            <div className="min-h-screen bg-blue-100 px-5 py-10">
+                <Loader />
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-blue-100 px-5 md:px-10 lg:px-20 xl:px-32 py-10 space-y-5">
-            <h1 className="text-4xl font-semibold text-center">
+        <div className="min-h-screen space-y-5 bg-blue-100 px-5 py-10 md:px-10 lg:px-20 xl:px-32">
+            <h1 className="text-center text-4xl font-semibold">
                 Syfe Savings Planner
             </h1>
 
-            <div className="bg-blue-700 text-white min-h-20 p-5">
-                <div className="flex justify-between mb-3">
-                    <div className="flex space-x-2 items-center py-1 px-2">
+            <div className="min-h-20 bg-blue-700 p-5 text-white">
+                <div className="mb-3 flex justify-between">
+                    <div className="flex items-center gap-2 px-2 py-1">
                         <BsGraphUpArrow />
                         <span>Financial Overview</span>
                     </div>
 
                     <button
                         onClick={fetchRate}
-                        className="hover:scale-105 active:scale-95 cursor-pointer duration-300 flex space-x-2 items-center bg-blue-600 py-1 px-2 rounded-lg"
+                        disabled={isLoading}
+                        className="flex items-center gap-2 rounded-lg bg-blue-600 px-2 py-1 duration-300 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <BiRefresh />
-                        <span className="md:block hidden">Refresh Rates</span>
-                        <span className="md:hidden block">Refresh</span>
+                        <span className="hidden md:block">Refresh Rates</span>
+                        <span className="block md:hidden">Refresh</span>
                     </button>
                 </div>
 
-                <div className="grid lg:gap-8 gap-5 xl:gap-10 lg:grid-cols-3 md:grid-cols-2 grid-cols-1">
+                <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 xl:gap-10">
                     <DashboardItem
                         icon={<FiTarget />}
                         iconText="Total Target"
@@ -135,12 +154,9 @@ export default function Home() {
                     <DashboardItem
                         icon={<BiWallet />}
                         iconText="Total Saved"
-                        primaryText={`₹ ${
-                            stats.totalTarget - stats.totalRemaining
-                        }`}
+                        primaryText={`₹ ${totalSaved}`}
                         secondaryText={`$ ${Math.floor(
-                            (stats.totalTarget - stats.totalRemaining) /
-                                exchangeRate
+                            totalSaved / exchangeRate
                         )}`}
                     />
 
@@ -150,21 +166,17 @@ export default function Home() {
                         primaryText={`${
                             stats.totalTarget > 0
                                 ? Math.floor(
-                                      ((stats.totalTarget -
-                                          stats.totalRemaining) /
-                                          stats.totalTarget) *
-                                          100 *
-                                          100
+                                      (totalSaved / stats.totalTarget) * 10000
                                   ) / 100
                                 : "0.00"
                         } %`}
-                        secondaryText={`Total Goal Completetion`}
+                        secondaryText="Total Goal Completion"
                     />
                 </div>
 
                 <hr className="my-3" />
 
-                <div className="md:flex-row md:text-base text-sm flex flex-col items-start justify-between">
+                <div className="flex flex-col items-start justify-between text-sm md:flex-row md:text-base">
                     <span>Exchange Rate : 1 USD = {exchangeRate}</span>
                     <span>
                         Last updated:{" "}
@@ -182,22 +194,22 @@ export default function Home() {
                 </div>
             </div>
 
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-semibold">Your Goals</h3>
                 <AddGoal />
             </div>
 
-            {goals && goals.length > 0 ? (
-                <div className="grid gap-5 lg:grid-cols-3 md:grid-cols-2 grid-cols-1">
-                    {goals.map((item, i) => (
+            {goals.length > 0 ? (
+                <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                    {goals.map((goal, index) => (
                         <GoalCard
-                            key={item.id ?? i}
-                            index={(i + 1).toString()}
-                            title={item.name}
-                            targetAmount={item.targetAmount}
-                            remainingAmount={item.remainingAmount}
-                            contributions={item.contributions ?? 0}
-                            currency={item.currency}
+                            key={goal.id ?? index}
+                            index={goal.id ?? index}
+                            title={goal.name}
+                            targetAmount={goal.targetAmount}
+                            remainingAmount={goal.remainingAmount}
+                            contributions={goal.contributions ?? 0}
+                            currency={goal.currency}
                         />
                     ))}
                 </div>
@@ -206,4 +218,6 @@ export default function Home() {
             )}
         </div>
     );
-}
+};
+
+export default Home;
