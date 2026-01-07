@@ -16,8 +16,8 @@ export default function DashboardItem({
     secondaryText,
 }: DashBoardItemsProps) {
     return (
-        <div>
-            <div className="flex items-center space-x-2">
+        <div className="bg-blue-600 p-3 rounded-lg">
+            <div className="flex items-center space-x-2 ">
                 {icon}
                 <span>{iconText}</span>
             </div>

@@ -5,7 +5,7 @@ import { PiCurrencyInrBold, PiPlus } from "react-icons/pi";
 import { BiDollar } from "react-icons/bi";
 import UpdateGoal from "./UpdateGoal";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db";
+import { db } from "@/db/db";
 import { TiTick } from "react-icons/ti";
 
 type GoalCardProps = {

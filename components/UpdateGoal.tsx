@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Modal } from "./Modal";
 import { PiPlus } from "react-icons/pi";
-import { db } from "@/lib/db";
+import { db } from "@/db/db";
 import { useLiveQuery } from "dexie-react-hooks";
 
 interface UpdateGoalProps {

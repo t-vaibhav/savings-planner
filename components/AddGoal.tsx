@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Modal } from "./Modal";
 import { PiPlus } from "react-icons/pi";
-import { db, Goal, Currency } from "@/lib/db";
+import { db, Goal, Currency } from "@/db/db";
 
 export default function AddGoal() {
     const [name, setName] = useState("");

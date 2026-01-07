@@ -5,7 +5,7 @@ import DashboardItem from "@/components/DashboardItem";
 import GoalCard from "@/components/GoalCard";
 import NoGoals from "@/components/NoGoals";
 
-import { db } from "@/lib/db";
+import { db } from "@/db/db";
 import { useLiveQuery } from "dexie-react-hooks";
 
 import { useEffect, useState } from "react";
@@ -13,7 +13,7 @@ import { BiRefresh, BiWallet } from "react-icons/bi";
 import { BsGraphUpArrow } from "react-icons/bs";
 import { FiTarget } from "react-icons/fi";
 
-import { dollarToInr } from "@/util/fetchRates";
+import { dollarToInr } from "@/lib/fetchRates";
 import { SlCalender } from "react-icons/sl";
 
 type Currency = "INR" | "USD";
@@ -100,7 +100,7 @@ export default function Home() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-blue-100 px-32 py-10 space-y-5">
+        <div className="min-h-screen bg-blue-100 px-5 md:px-10 lg:px-20 xl:px-32 py-10 space-y-5">
             <h1 className="text-4xl font-semibold text-center">
                 Syfe Savings Planner
             </h1>
@@ -117,11 +117,12 @@ export default function Home() {
                         className="hover:scale-105 active:scale-95 cursor-pointer duration-300 flex space-x-2 items-center bg-blue-600 py-1 px-2 rounded-lg"
                     >
                         <BiRefresh />
-                        <span>Refresh Rates</span>
+                        <span className="md:block hidden">Refresh Rates</span>
+                        <span className="md:hidden block">Refresh</span>
                     </button>
                 </div>
 
-                <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1">
+                <div className="grid lg:gap-8 gap-5 xl:gap-10 lg:grid-cols-3 md:grid-cols-2 grid-cols-1">
                     <DashboardItem
                         icon={<FiTarget />}
                         iconText="Total Target"
@@ -163,7 +164,7 @@ export default function Home() {
 
                 <hr className="my-3" />
 
-                <div className="flex justify-between">
+                <div className="md:flex-row md:text-base text-sm flex flex-col items-start justify-between">
                     <span>Exchange Rate : 1 USD = {exchangeRate}</span>
                     <span>
                         Last updated:{" "}
@@ -188,10 +189,10 @@ export default function Home() {
 
             {goals && goals.length > 0 ? (
                 <div className="grid gap-5 lg:grid-cols-3 md:grid-cols-2 grid-cols-1">
-                    {goals.map((item, index) => (
+                    {goals.map((item, i) => (
                         <GoalCard
-                            key={item.id ?? index}
-                            index={item.id}
+                            key={item.id ?? i}
+                            index={(i + 1).toString()}
                             title={item.name}
                             targetAmount={item.targetAmount}
                             remainingAmount={item.remainingAmount}
