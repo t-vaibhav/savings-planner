@@ -147,7 +147,7 @@ const AddGoal = (): JSX.Element => {
 
                     <button
                         type="submit"
-                        className="w-full rounded-lg bg-blue-600 py-3 text-white"
+                        className="w-full cursor-pointer rounded-lg bg-blue-600 py-3 text-white"
                     >
                         Add Goal
                     </button>
