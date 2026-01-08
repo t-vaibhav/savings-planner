@@ -119,7 +119,7 @@ const Home = (): JSX.Element => {
 
     return (
         <div className="min-h-screen space-y-5 bg-blue-100 px-5 py-10 md:px-10 lg:px-20 xl:px-32">
-            <h1 className="text-center text-4xl font-semibold flex  justify-center items-center space-x-3">
+            <h1 className="text-center text-2xl sm:text-4xl font-semibold flex  justify-center items-center space-x-3">
                 <FiTarget className="text-blue-700" />{" "}
                 <span>Syfe Savings Planner</span>
             </h1>
